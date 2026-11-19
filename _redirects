@@ -1,0 +1,8 @@
+# Working files stay in the project but are not shown on the site.
+/tools/*    /  302
+/data/*     /  302
+/db/*       /  302
+/README.md  /  302
+/POWER.md   /  302
+/PHOTOS.md  /  302
+/assets/originals/*  /  302
