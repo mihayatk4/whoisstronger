@@ -1,17 +1,18 @@
 # Files that stay in the project but are NOT published on the website.
-.git
-.gitignore
-.assetsignore
-.claude
-node_modules
-.wrangler
-wrangler.jsonc
-worker
-tools
-data
-db
-assets/originals
-README.md
-POWER.md
-PHOTOS.md
-assets/characters/README.txt
+# A leading "/" means "only at the top of the project" (so js/data stays published).
+/.git
+/.gitignore
+/.assetsignore
+/.claude
+/node_modules
+/.wrangler
+/wrangler.jsonc
+/worker
+/tools
+/data
+/db
+/assets/originals
+/README.md
+/POWER.md
+/PHOTOS.md
+/assets/characters/README.txt
