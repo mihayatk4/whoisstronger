@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin · Who's Stronger?</title>
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0b0d; --card: #14161a; --card-2: #1a1d22;
+      --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13);
+      --ink: #eceef1; --ink-2: #b9bdc5; --mute: #7d828c;
+      /* chart colors: checked for color-blind separation on the dark card */
+      --rose: #ec5a7e; --sky: #3b8fe0; --mint: #1aa36e; --mint-soft: rgba(26,163,110,.32);
+      --accent: #3ee39b; --gold: #ffd166; --bad: #ff6262;
+      --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+      --body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); min-height: 100dvh; }
+    button, input, select { font: inherit; color: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 60px; }
+    h1, h2 { font-family: var(--display); margin: 0; letter-spacing: -.01em; }
+    h1 { font-size: 22px; display: flex; align-items: center; gap: 10px; }
+    h1 img { width: 28px; height: 28px; }
+    h1 small { font: 600 12px var(--body); color: var(--mute); background: var(--card-2); border: 1px solid var(--line); padding: 2px 8px; border-radius: 99px; }
+    h2 { font-size: 17px; }
+    .muted { color: var(--mute); }
+
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+    .seg button { background: none; border: 0; padding: 5px 11px; border-radius: 7px; cursor: pointer; color: var(--ink-2); font-weight: 600; font-size: 13px; }
+    .seg button[aria-pressed="true"] { background: var(--card-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); }
+    .btn { background: var(--card); border: 1px solid var(--line-2); border-radius: 10px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: 13px; }
+    .btn:hover { background: var(--card-2); }
+    .btn.primary { background: var(--accent); color: #04140c; border-color: transparent; }
+    .stamp { font-size: 12px; color: var(--mute); }
+
+    .demo { background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.35); color: var(--gold); padding: 8px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    @media (max-width: 520px) { .tiles { grid-template-columns: 1fr 1fr; } .tile .v { font-size: 26px; } }
+    .tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+    .tile .k { font-size: 12.5px; color: var(--mute); font-weight: 600; }
+    .tile .v { font: 800 30px/1.15 var(--display); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .tile .s { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+    .up { color: var(--accent); } .down { color: var(--bad); }
+
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+    .card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--ink-2); }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+    .chart { position: relative; }
+    .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart .axis { fill: var(--mute); font-size: 11px; font-family: var(--body); }
+    .chart .grid-l { stroke: var(--line); }
+    .chart .hit { fill: transparent; cursor: default; }
+    .chart .hit:hover + .hl, .chart .col:hover .hl { opacity: 1; }
+    .chart .hl { fill: rgba(255,255,255,.05); opacity: 0; pointer-events: none; }
+    .tip { position: absolute; pointer-events: none; background: #23262c; border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transition: opacity .1s; z-index: 5; }
+    .tip b { display: block; font-size: 12px; color: var(--mute); font-weight: 600; margin-bottom: 2px; }
+    .tip .row { display: flex; align-items: center; gap: 6px; }
+    .tip .row i { width: 8px; height: 8px; border-radius: 2px; }
+    .empty { color: var(--mute); font-size: 13.5px; padding: 26px 0; text-align: center; }
+
+    .daybar { display: flex; align-items: center; gap: 8px; }
+    .daybar .btn { padding: 4px 10px; }
+    .daybar input { background: var(--card-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 4px 8px; color-scheme: dark; }
+
+    .fights { display: grid; gap: 10px; }
+    .fight { display: grid; grid-template-columns: 1fr minmax(0, 1.5fr) 1fr; align-items: center; gap: 14px; background: var(--card-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+    @media (max-width: 680px) { .fight { grid-template-columns: 1fr 1fr; } .fight .mid { grid-column: 1 / -1; order: 3; } }
+    .who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .who.r { flex-direction: row-reverse; text-align: right; }
+    .who img { width: 46px; height: 46px; border-radius: 12px; object-fit: cover; object-position: top; flex: none; background: #222; }
+    .who .n { font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+    .who .u { font-size: 12px; color: var(--mute); }
+    .who .w { font-size: 11px; font-weight: 700; color: var(--accent); }
+    .mid .tags { display: flex; justify-content: space-between; font-size: 12px; color: var(--mute); margin-bottom: 6px; gap: 8px; }
+    .tag { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; padding: 1px 7px; border-radius: 99px; background: rgba(255,255,255,.07); color: var(--ink-2); }
+    .tag.boss { background: rgba(255,98,98,.15); color: #ff8a8a; }
+    .tag.sl { background: rgba(255,209,102,.13); color: var(--gold); }
+    .split { display: flex; height: 26px; gap: 2px; border-radius: 8px; overflow: hidden; }
+    .split div { display: flex; align-items: center; padding: 0 8px; font-weight: 800; font-size: 12.5px; color: #fff; min-width: 0; white-space: nowrap; transition: flex-basis .4s; }
+    .split .l { background: var(--rose); }
+    .split .r { background: var(--sky); justify-content: flex-end; }
+    .split.none div { background: rgba(255,255,255,.06); color: var(--mute); justify-content: center; width: 100%; font-weight: 600; }
+    .mid .foot { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); margin-top: 6px; gap: 8px; }
+    .hist { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin-top: 8px; }
+    .hist span { flex: 1; background: var(--gold); opacity: .85; border-radius: 3px 3px 0 0; min-height: 1px; }
+    .hist span.official { background: #fff; opacity: 1; }
+    .hist-ax { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--mute); }
+
+    details { margin-top: 12px; }
+    summary { cursor: pointer; color: var(--ink-2); font-weight: 600; font-size: 13.5px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--mute); font-weight: 600; }
+
+    .login { max-width: 360px; margin: 14vh auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; }
+    .login h1 { margin-bottom: 6px; }
+    .login p { color: var(--ink-2); font-size: 13.5px; margin: 0 0 14px; }
+    .login input { width: 100%; background: var(--card-2); border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .login .btn { width: 100%; padding: 10px; }
+    .err { color: var(--bad); font-size: 13px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <main class="wrap" id="app"></main>
+
+  <!-- game data: names, pictures and which fights each day had -->
+  <script src="js/config.js"></script>
+  <script src="js/data/characters.js"></script>
+  <script src="js/data/schedule.js"></script>
+  <script src="js/locales/en.js"></script>
+  <script src="js/locales/en.characters.js"></script>
+  <script src="js/engine.js"></script>
+  <script>
+  (function () {
+    const W = window.WIS, E = W.engine, cfg = W.config;
+    const app = document.getElementById("app");
+    const KEY = "wis:adminKey";
+    const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || location.protocol === "file:";
+    const store = {
+      get() { try { return localStorage.getItem(KEY) || ""; } catch (e) { return ""; } },
+      set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} }
+    };
+    const st = { range: 30, day: null, data: null, demo: false };
+    try { st.range = Number(localStorage.getItem("wis:adminRange")) || 30; } catch (e) {}
+
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
+    const name = (id) => ((W.locales.en.characters || {})[id] || {}).name || id;
+    const universe = (id) => ((W.locales.en.characters || {})[id] || {}).universe || "";
+    const img = (id) => { const c = W.char(id); return c && c.img ? "assets/characters/" + c.img : "assets/icons/icon-192.png"; };
+    const pk = (a, b) => (a < b ? a + "|" + b : b + "|" + a);
+    const addDays = (key, n) => E.keyFromIndex(E.dayIndex(key) + n);
+    const shortDate = (key) => { const p = key.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+    const longDate = (key) => { const p = key.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }); };
+
+    // ---------- login ----------
+    function loginView(msg) {
+      app.innerHTML = `<form class="login" id="lf">
+        <h1><img src="assets/icons/icon.svg" alt="">Admin</h1>
+        <p>Enter the admin key (the ADMIN_KEY secret from Cloudflare).</p>
+        <input type="password" id="k" placeholder="Admin key" autocomplete="current-password" required>
+        <div class="err">${msg ? esc(msg) : ""}</div>
+        <button class="btn primary">Open stats</button>
+      </form>`;
+      document.getElementById("lf").onsubmit = (e) => { e.preventDefault(); store.set(document.getElementById("k").value.trim()); load(); };
+      document.getElementById("k").focus();
+    }
+
+    // ---------- data ----------
+    async function load() {
+      const from = st.range ? addDays(E.todayKey(), -(st.range - 1)) : cfg.launchDate;
+      const fromKey = from < cfg.launchDate ? cfg.launchDate : from;
+      const q = "/api/admin?from=" + fromKey + (st.day ? "&day=" + st.day : "");
+      try {
+        const r = await fetch(q, { headers: { authorization: "Bearer " + store.get() } });
+        if (r.status === 401) { const had = store.get(); store.set(""); return loginView(had ? "Wrong key." : ""); }
+        if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) throw new Error((await r.json().catch(() => ({}))).error || "HTTP " + r.status);
+        st.data = await r.json(); st.demo = false;
+      } catch (e) {
+        if (!local) { if (!st.data) return loginView("Can't load: " + e.message); }
+        else { st.data = demoData(fromKey, st.day); st.demo = true; }
+      }
+      st.day = st.data.day;
+      render();
+    }
+
+    // ---------- page ----------
+    function render() {
+      const d = st.data, T = d.totals || {};
+      const today = E.todayKey(), yest = addDays(today, -1);
+      const byDay = {}; (d.daily || []).forEach((r) => (byDay[r.day] = r.players));
+      const fin = {}; (d.finished || []).forEach((r) => (fin[r.day] = r));
+      const fresh = {}; (d.newPlayers || []).forEach((r) => (fresh[r.day] = r.n));
+      const tP = byDay[today] || 0, yP = byDay[yest] || 0;
+      const delta = yP ? Math.round(((tP - yP) / yP) * 100) : null;
+      const tF = fin[today] ? fin[today].n : 0;
+      const ret = T.players ? Math.round((100 * (T.came_back || 0)) / T.players) : 0;
+
+      app.innerHTML = `
+        <div class="top">
+          <h1><img src="assets/icons/icon.svg" alt="">Who's Stronger? <small>Admin</small></h1>
+          <div class="controls">
+            <div class="seg" role="group" aria-label="Period">
+              ${[[7, "7 days"], [30, "30 days"], [0, "All time"]].map(([v, l]) => `<button data-range="${v}" aria-pressed="${st.range === v}">${l}</button>`).join("")}
+            </div>
+            <button class="btn" id="refresh">↻ Refresh</button>
+            ${st.demo ? "" : `<button class="btn" id="logout">Log out</button>`}
+          </div>
+        </div>
+        ${st.demo ? `<div class="demo">Demo numbers — this is localhost. On whoisstronger.org/admin you'll see the real players.</div>` : ""}
+        <div class="tiles">
+          ${tile("Players today", fmt(tP), delta == null ? "yesterday " + fmt(yP) : `<span class="${delta >= 0 ? "up" : "down"}">${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta)}%</span> vs yesterday (${fmt(yP)})`)}
+          ${tile("Finished today", fmt(tF), tP ? Math.round((100 * tF) / tP) + "% of today's players played all 5" : "played all 5 fights")}
+          ${tile("New today", fmt(fresh[today] || 0), "first time playing")}
+          ${tile(st.range ? `Players · ${st.range} days` : "Players · all time", fmt(T.players), `${fmt(T.votes + T.sliders)} answers given`)}
+          ${tile("Came back", ret + "%", `${fmt(T.came_back)} played on 2+ days`)}
+        </div>
+        <div class="grid">
+          <section class="card">
+            <div class="card-h"><h2>Players per day</h2>
+              <div class="legend"><span><i style="background:var(--mint-soft);box-shadow:inset 0 0 0 1px var(--mint)"></i>Played</span><span><i style="background:var(--mint)"></i>Finished all 5</span></div></div>
+            <div class="chart" id="cDays"></div>
+          </section>
+          <section class="card">
+            <div class="card-h"><h2>When they play</h2><span class="muted" style="font-size:12.5px">players by hour, your time · 14 days</span></div>
+            <div class="chart" id="cHours"></div>
+          </section>
+        </div>
+        <section class="card" style="margin-bottom:12px">
+          <div class="card-h">
+            <h2>Fights · ${esc(longDate(st.day))}</h2>
+            <div class="daybar">
+              <button class="btn" id="prev" aria-label="Previous day">‹</button>
+              <input type="date" id="dpick" value="${st.day}" min="${cfg.launchDate}" max="${today}">
+              <button class="btn" id="next" aria-label="Next day" ${st.day >= today ? "disabled" : ""}>›</button>
+            </div>
+          </div>
+          <div class="fights" id="fights"></div>
+        </section>
+        <div class="grid">
+          <section class="card">
+            <div class="card-h"><h2>Scores · ${esc(shortDate(st.day))}</h2><span class="muted" style="font-size:12.5px">${dayScoreLine(fin[st.day])}</span></div>
+            <div class="chart" id="cScores"></div>
+          </section>
+          <section class="card">
+            <div class="card-h"><h2>How to read this</h2></div>
+            <div class="muted" style="font-size:13px">
+              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Player</b> = one browser that answered at least one fight. Phone + laptop count as two.</p>
+              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Finished</b> = sent a final score after all 5 fights.</p>
+              <p style="margin:0">Guess and Higher-or-Lower aren't stored — see visits in Cloudflare Web Analytics.</p>
+            </div>
+          </section>
+        </div>
+        <section class="card">
+          <details><summary>All days as a table</summary>${dayTable(byDay, fin, fresh)}</details>
+        </section>
+        <p class="stamp">Updated ${new Date(d.generated).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>`;
+
+      app.querySelectorAll("[data-range]").forEach((b) => (b.onclick = () => { st.range = Number(b.dataset.range); try { localStorage.setItem("wis:adminRange", st.range); } catch (e) {} load(); }));
+      document.getElementById("refresh").onclick = load;
+      const lo = document.getElementById("logout"); if (lo) lo.onclick = () => { store.set(""); st.data = null; loginView(); };
+      const go = (k) => { if (!k || k < cfg.launchDate || k > today) return; st.day = k; load(); };
+      document.getElementById("prev").onclick = () => go(addDays(st.day, -1));
+      document.getElementById("next").onclick = () => go(addDays(st.day, 1));
+      document.getElementById("dpick").onchange = (e) => go(e.target.value);
+
+      daysChart(byDay, fin);
+      hoursChart(d.hours || []);
+      fights();
+      scoresChart(d.detail.scoreHist || []);
+      clearTimeout(st.rt); window.onresize = () => { clearTimeout(st.rt); st.rt = setTimeout(() => { daysChart(byDay, fin); hoursChart(d.hours || []); scoresChart(d.detail.scoreHist || []); }, 150); };
+    }
+
+    const tile = (k, v, s) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+    const dayScoreLine = (f) => (f ? `${fmt(f.n)} finished · avg ${fmt(f.avg)} · best ${fmt(f.best)}` : "nobody finished yet");
+
+    function dayTable(byDay, fin, fresh) {
+      const days = Object.keys(byDay).sort().reverse();
+      if (!days.length) return `<div class="empty">No players yet.</div>`;
+      return `<table><thead><tr><th>Day</th><th>Players</th><th>New</th><th>Finished</th><th>Avg score</th><th>Best</th></tr></thead><tbody>` +
+        days.map((k) => `<tr><td>${esc(longDate(k))}</td><td>${fmt(byDay[k])}</td><td>${fmt(fresh[k] || 0)}</td><td>${fmt(fin[k] ? fin[k].n : 0)}</td><td>${fin[k] ? fmt(fin[k].avg) : "—"}</td><td>${fin[k] ? fmt(fin[k].best) : "—"}</td></tr>`).join("") +
+        `</tbody></table>`;
+    }
+
+    // ---------- charts (plain SVG) ----------
+    function niceMax(v) { if (v <= 20) return Math.max(4, Math.ceil(v / 4) * 4); /* whole-number ticks */ const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p; return v; }
+
+    /* bars: list of { label, tip, values:[{v, fill, stroke}] } drawn overlapped (first = back) */
+    function bars(el, list, opts) {
+      opts = opts || {};
+      const w = Math.max(280, Math.round(el.clientWidth) || 640), h = opts.h || 220, L = 34, R = 6, Tp = 8, B = 24;
+      if (!list.length || list.every((x) => x.values.every((v) => !v.v))) { el.innerHTML = `<div class="empty">${opts.empty || "No data yet."}</div>`; return; }
+      const max = niceMax(Math.max(...list.flatMap((x) => x.values.map((v) => v.v))));
+      const cw = (w - L - R) / list.length, bw = Math.max(2, Math.min(28, cw - 3));
+      const y = (v) => Tp + (h - Tp - B) * (1 - v / max);
+      const every = Math.ceil(list.length / (opts.maxLabels || 10));
+      let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(opts.label || "")}">`;
+      for (let i = 0; i <= 4; i++) {
+        const v = (max / 4) * i, yy = y(v);
+        s += `<line class="grid-l" x1="${L}" x2="${w - R}" y1="${yy}" y2="${yy}"/><text class="axis" x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmt(Math.round(v * 10) / 10)}</text>`;
+      }
+      list.forEach((x, i) => {
+        const cx = L + cw * i + cw / 2;
+        s += `<g class="col" data-i="${i}"><rect class="hl" x="${cx - cw / 2}" y="${Tp}" width="${cw}" height="${h - Tp - B}"/>`;
+        x.values.forEach((v) => {
+          if (!v.v) return;
+          const top = y(v.v), bh = h - B - top, r = Math.min(4, bw / 2, bh);
+          // rounded data end, square on the baseline
+          s += `<path d="M${cx - bw / 2} ${h - B}V${top + r}q0 -${r} ${r} -${r}h${bw - 2 * r}q${r} 0 ${r} ${r}V${h - B}z" fill="${v.fill}" ${v.stroke ? `stroke="${v.stroke}" stroke-width="1"` : ""}/>`;
+        });
+        s += `<rect class="hit" x="${cx - cw / 2}" y="0" width="${cw}" height="${h}"/></g>`;
+        if (i % every === 0) s += `<text class="axis" x="${cx}" y="${h - 6}" text-anchor="middle">${esc(x.label)}</text>`;
+      });
+      el.innerHTML = s + `</svg><div class="tip"></div>`;
+      const tip = el.querySelector(".tip"), svg = el.querySelector("svg");
+      el.querySelectorAll(".col").forEach((g) => {
+        g.onmouseenter = g.onmousemove = (ev) => {
+          const x = list[g.dataset.i]; tip.innerHTML = x.tip; tip.style.opacity = 1;
+          const box = el.getBoundingClientRect();
+          let left = ev.clientX - box.left + 12; if (left + tip.offsetWidth > box.width) left = ev.clientX - box.left - tip.offsetWidth - 12;
+          tip.style.left = Math.max(0, left) + "px"; tip.style.top = Math.max(0, ev.clientY - box.top - tip.offsetHeight - 8) + "px";
+        };
+        g.onmouseleave = () => (tip.style.opacity = 0);
+      });
+    }
+    const tipRow = (color, text, ring) => `<div class="row"><i style="background:${color}${ring ? ";box-shadow:inset 0 0 0 1px var(--mint)" : ""}"></i>${text}</div>`;
+
+    function daysChart(byDay, fin) {
+      const today = E.todayKey();
+      const first = st.range ? addDays(today, -(st.range - 1)) : (Object.keys(byDay).sort()[0] || today);
+      const start = first < cfg.launchDate ? cfg.launchDate : first;
+      const list = [];
+      for (let k = start; k <= today; k = addDays(k, 1)) {
+        const p = byDay[k] || 0, f = fin[k] ? fin[k].n : 0;
+        list.push({ label: shortDate(k), tip: `<b>${esc(longDate(k))}</b>${tipRow("var(--mint-soft)", fmt(p) + " played", 1)}${tipRow("var(--mint)", fmt(f) + " finished")}`,
+          values: [{ v: p, fill: "var(--mint-soft)", stroke: "var(--mint)" }, { v: f, fill: "var(--mint)" }] });
+      }
+      bars(document.getElementById("cDays"), list, { label: "Players per day", maxLabels: 8, empty: "No players yet — share the link!" });
+    }
+
+    function hoursChart(rows) {
+      const off = -new Date().getTimezoneOffset() / 60, n = Array(24).fill(0);
+      rows.forEach((r) => { n[(((r.h + Math.round(off)) % 24) + 24) % 24] += r.n; });
+      const hh = (h) => (h % 12 || 12) + (h < 12 ? "a" : "p");
+      bars(document.getElementById("cHours"), n.map((v, h) => ({ label: hh(h), tip: `<b>${hh(h)}–${hh((h + 1) % 24)}</b>${fmt(v)} players`, values: [{ v, fill: "var(--sky)" }] })), { h: 220, maxLabels: 6, label: "Players by hour" });
+    }
+
+    function scoresChart(rows) {
+      const n = Array(10).fill(0); rows.forEach((r) => (n[r.bucket] = r.n));
+      bars(document.getElementById("cScores"), n.map((v, i) => ({ label: i * 100 + "", tip: `<b>${i * 100}–${i === 9 ? 1000 : i * 100 + 99} points</b>${fmt(v)} players`, values: [{ v, fill: "var(--gold)" }] })), { h: 180, label: "Score distribution", empty: "Nobody finished this day yet." });
+    }
+
+    // ---------- the day's fights ----------
+    function fights() {
+      const el = document.getElementById("fights");
+      const idx = E.dayIndex(st.day), day = E.battleDay(idx), plan = E.sliderPlan(idx);
+      const dt = st.data.detail, votes = {}, sl = {}, hist = {};
+      dt.votes.forEach((r) => { const k = pk(r.a, r.b); (votes[k] = votes[k] || {})[r.pick] = r.n; });
+      dt.sliders.forEach((r) => (sl[pk(r.a, r.b)] = r));
+      dt.sliderHist.forEach((r) => { const k = pk(r.a, r.b); (hist[k] = hist[k] || Array(10).fill(0))[r.bucket] = r.n; });
+      el.innerHTML = day.pairs.map((p, i) => {
+        const a = W.char(p.a), b = W.char(p.b); if (!a || !b) return "";
+        const m = E.matchup(a, b), k = pk(p.a, p.b), boss = i === day.pairs.length - 1, slider = plan.positions.includes(i);
+        const who = (id, side, win) => `<div class="who ${side}"><img src="${img(id)}" alt="" loading="lazy"><div><div class="n">${esc(name(id))}</div><div class="u">${esc(universe(id))}</div>${win ? `<div class="w">✓ wins ${m.favPct}%</div>` : ""}</div></div>`;
+        let mid;
+        if (slider) {
+          const r = sl[k], aFirst = p.a < p.b; // stored for the alphabetically first fighter
+          const avgA = r ? (aFirst ? r.avg : 100 - r.avg) : null;
+          let h = hist[k] || Array(10).fill(0); if (!aFirst) h = h.slice().reverse();
+          const hm = Math.max(1, ...h), ob = Math.min(9, Math.floor(m.pctA / 10));
+          mid = `<div class="tags"><span>Round ${i + 1}</span><span class="tag sl">SLIDER</span>${boss ? `<span class="tag boss">BOSS</span>` : "<span></span>"}</div>
+            ${r ? `<div class="split"><div class="l" style="flex-basis:${avgA}%">${Math.round(avgA)}%</div><div class="r" style="flex-basis:${100 - avgA}%">${Math.round(100 - avgA)}%</div></div>
+            <div class="hist" title="How players set the slider for ${esc(name(p.a))} (white = the right answer)">${h.map((v, j) => `<span class="${j === ob ? "official" : ""}" style="height:${(100 * v) / hm}%"></span>`).join("")}</div>
+            <div class="hist-ax"><span>0% ${esc(name(p.a))}</span><span>100%</span></div>
+            <div class="foot"><span>${fmt(r.n)} answers · avg ${Math.round(avgA)}%</span><span>answer ${m.pctA}% · off by ${Math.abs(Math.round(avgA - m.pctA))}</span></div>`
+            : `<div class="split none"><div>No answers yet</div></div><div class="foot"><span></span><span>answer ${m.pctA}%</span></div>`}`;
+        } else {
+          const v = votes[k] || {}, na = v[p.a] || 0, nb = v[p.b] || 0, n = na + nb;
+          const pa = n ? Math.round((100 * na) / n) : 0, right = m.favorite === p.a ? pa : 100 - pa;
+          mid = `<div class="tags"><span>Round ${i + 1}</span>${boss ? `<span class="tag boss">BOSS</span>` : "<span></span>"}</div>
+            ${n ? `<div class="split"><div class="l" style="flex-basis:${pa}%">${pa >= 12 ? pa + "%" : ""}</div><div class="r" style="flex-basis:${100 - pa}%">${100 - pa >= 12 ? 100 - pa + "%" : ""}</div></div>
+            <div class="foot"><span>${fmt(n)} votes</span><span>${right}% picked right</span></div>`
+            : `<div class="split none"><div>No votes yet</div></div>`}`;
+        }
+        return `<div class="fight">${who(p.a, "", m.favorite === p.a)}<div class="mid">${mid}</div>${who(p.b, "r", m.favorite === p.b)}</div>`;
+      }).join("");
+    }
+
+    // ---------- demo numbers for localhost ----------
+    function demoData(from, day) {
+      const rnd = E.rngFrom("admin-demo"), today = E.todayKey();
+      const daily = [], finished = [], newPlayers = [];
+      let total = 0;
+      for (let k = from, i = 0; k <= today; k = addDays(k, 1), i++) {
+        const p = Math.round(40 * Math.pow(1.18, i) * (0.8 + rnd() * 0.4));
+        daily.push({ day: k, players: p }); total += p;
+        const f = Math.round(p * (0.62 + rnd() * 0.15));
+        finished.push({ day: k, n: f, avg: Math.round(430 + rnd() * 120), best: 900 + Math.round(rnd() * 100) });
+        newPlayers.push({ day: k, n: Math.round(p * (i ? 0.55 : 1)) });
+      }
+      day = day || today;
+      const idx = E.dayIndex(day), D = E.battleDay(idx), plan = E.sliderPlan(idx), dp = (daily.find((r) => r.day === day) || { players: 120 }).players;
+      const votes = [], sliders = [], sliderHist = [];
+      D.pairs.forEach((p, i) => {
+        const [a, b] = p.a < p.b ? [p.a, p.b] : [p.b, p.a], m = E.matchup(W.char(a), W.char(b));
+        if (plan.positions.includes(i)) {
+          const n = Math.round(dp * 0.8), avg = Math.max(5, Math.min(95, m.pctA + (rnd() - 0.5) * 24));
+          sliders.push({ a, b, n, avg: Math.round(avg * 10) / 10 });
+          for (let j = 0; j < 10; j++) sliderHist.push({ a, b, bucket: j, n: Math.round(n * Math.exp(-Math.pow(j * 10 + 5 - avg, 2) / 500) / 3) });
+        } else {
+          const n = Math.round(dp * (0.95 - i * 0.05)), share = Math.max(0.15, Math.min(0.9, m.pA + (rnd() - 0.5) * 0.3));
+          votes.push({ a, b, pick: a, n: Math.round(n * share) }, { a, b, pick: b, n: n - Math.round(n * share) });
+        }
+      });
+      const scoreHist = [...Array(10).keys()].map((j) => ({ bucket: j, n: Math.round(dp * 0.6 * Math.exp(-Math.pow(j - 4.6, 2) / 5) / 3) }));
+      const hours = [...Array(24).keys()].map((h) => ({ h, n: Math.round(30 + 90 * Math.max(0, Math.sin(((h - 10) / 24) * Math.PI * 2)) * (0.8 + rnd() * 0.4)) }));
+      return {
+        from, day, generated: Date.now(), daily, finished, newPlayers, hours,
+        totals: { players: Math.round(total * 0.55), came_back: Math.round(total * 0.21), votes: total * 4, sliders: total, finished: finished.reduce((s, r) => s + r.n, 0) },
+        detail: { votes, sliders, sliderHist, scoreHist }
+      };
+    }
+
+    if (store.get() || local) load(); else loginView();
+  })();
+  </script>
+</body>
+</html>

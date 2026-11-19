@@ -182,6 +182,14 @@ node tools/fetch-superheroes.js
 - Превью ссылки: вставьте адрес в Telegram/Discord — должна появиться картинка Goku vs Superman. Если кеш старый — проверьте на opengraph.xyz.
 - Search Console (Google): добавьте сайт и отправьте `https://whoisstronger.org/sitemap.xml`.
 
+### Админка (статистика игроков)
+
+`https://whoisstronger.org/admin` — игроки по дням, сколько дошло до конца, новые и вернувшиеся, в какие часы играют, голоса за каждый бой дня, ответы на ползунке и распределение очков.
+
+Вход по секретному ключу. Задаётся один раз: Cloudflare → Workers & Pages → **whoisstronger** → Settings → **Variables and Secrets** → Add → тип **Secret**, имя `ADMIN_KEY`, значение — длинный пароль (20+ символов). Ключ хранится только в Cloudflare, в код и на GitHub он не попадает. Сменить ключ — поменять значение там же.
+
+На localhost страница `admin.html` показывает демо-цифры. Код: `admin.html` и `worker/api/admin.js`.
+
 ### Обновления
 
 Изменили что-то → загрузили на GitHub → Cloudflare сам опубликует за минуту. Скрипты и стили не кешируются надолго (`_headers`), поэтому игроки получают новую версию при следующем заходе.

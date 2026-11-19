@@ -2,10 +2,12 @@
    Static files (index.html, js, css, pictures) are served by Cloudflare
    directly. This script only runs for paths that aren't files:
      POST /api/vote, /api/slider, /api/score  → votes database (D1, binding "DB")
+     GET  /api/admin                          → numbers for admin.html (needs ADMIN_KEY)
      anything else                            → the 404 page               */
 import * as vote from "./api/vote.js";
 import * as slider from "./api/slider.js";
 import * as score from "./api/score.js";
+import * as admin from "./api/admin.js";
 
 const ROUTES = { "/api/vote": vote, "/api/slider": slider, "/api/score": score };
 
@@ -13,6 +15,12 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const route = ROUTES[url.pathname.replace(/\/$/, "")];
+    if (url.pathname.replace(/\/$/, "") === "/api/admin") {
+      if (request.method !== "GET") return admin.onRequest();
+      if (!env.DB) return json({ error: "votes database is not connected yet" }, 503);
+      try { return await admin.onRequestGet({ request, env }); }
+      catch (e) { return json({ error: "server error" }, 500); }
+    }
     if (route) {
       if (request.method !== "POST") return route.onRequest();
       if (!env.DB) return json({ error: "votes database is not connected yet" }, 503);

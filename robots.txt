@@ -3,5 +3,6 @@ Allow: /
 Disallow: /api/
 Disallow: /tools/
 Disallow: /data/
+Disallow: /admin
 
 Sitemap: https://whoisstronger.org/sitemap.xml
