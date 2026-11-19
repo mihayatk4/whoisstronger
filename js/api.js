@@ -9,6 +9,7 @@
      POST /api/vote    { day, a, b, pick, cid }   -> { total, votesA }
      POST /api/slider  { day, a, b, value, cid }  -> { avg, total }
      POST /api/score   { day, total, cid }        -> { percentile, players }
+     POST /api/time    { sid, day, ms, cid }      -> time spent on this visit
    cid = a random ID made once in this browser (no name, no account), so each
    browser counts once per fight.                                            */
 (function () {
@@ -84,6 +85,33 @@
       res && res.percentile != null ? { pct: res.percentile, demo: false } : null
     );
   }
+
+  /* Time on site: counts only while the tab is visible and someone touched it
+     in the last 2 minutes (a tab left open doesn't count). The running total
+     for this visit is sent every minute and when the tab is hidden/closed. */
+  function trackTime() {
+    if (demo) return;
+    const IDLE = 120000, sid = Array.from(crypto.getRandomValues(new Uint8Array(10)), (n) => n.toString(36).padStart(2, "0")).join("");
+    const day = E.todayKey();
+    let ms = 0, sent = 0, last = Date.now(), input = Date.now();
+    const awake = () => document.visibilityState === "visible" && Date.now() - input < IDLE;
+    const tick = () => { const now = Date.now(); if (awake()) ms += Math.min(now - last, 10000); last = now; };
+    const send = () => {
+      tick();
+      if (ms < 3000 || ms - sent < 1000) return;
+      sent = ms;
+      const body = JSON.stringify({ sid, day, ms: Math.round(ms), cid: clientId() });
+      try { if (navigator.sendBeacon && navigator.sendBeacon("/api/time", new Blob([body], { type: "application/json" }))) return; } catch (e) {}
+      fetch("/api/time", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }).catch(() => {});
+    };
+    ["pointerdown", "keydown", "scroll", "touchstart", "wheel"].forEach((ev) =>
+      addEventListener(ev, () => { tick(); input = Date.now(); }, { passive: true, capture: true }));
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") send(); else { last = input = Date.now(); } });
+    addEventListener("pagehide", send);
+    setInterval(tick, 5000);
+    setInterval(send, 60000);
+  }
+  trackTime();
 
   W.api = { vote, sliderVote, percentile, demo };
 })();

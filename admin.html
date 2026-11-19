@@ -43,7 +43,8 @@
 
     .demo { background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.35); color: var(--gold); padding: 8px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
 
-    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+    @media (max-width: 1000px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     @media (max-width: 520px) { .tiles { grid-template-columns: 1fr 1fr; } .tile .v { font-size: 26px; } }
     .tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
     .tile .k { font-size: 12.5px; color: var(--mute); font-weight: 600; }
@@ -138,6 +139,7 @@
     try { st.range = Number(localStorage.getItem("wis:adminRange")) || 30; } catch (e) {}
 
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const dur = (ms) => { if (ms == null) return "—"; const t = Math.round(ms / 1000); return t < 60 ? t + "s" : Math.floor(t / 60) + "m " + String(t % 60).padStart(2, "0") + "s"; };
     const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-US"));
     const name = (id) => ((W.locales.en.characters || {})[id] || {}).name || id;
     const universe = (id) => ((W.locales.en.characters || {})[id] || {}).universe || "";
@@ -185,6 +187,8 @@
       const byDay = {}; (d.daily || []).forEach((r) => (byDay[r.day] = r.players));
       const fin = {}; (d.finished || []).forEach((r) => (fin[r.day] = r));
       const fresh = {}; (d.newPlayers || []).forEach((r) => (fresh[r.day] = r.n));
+      const tday = {}; (d.timeDaily || []).forEach((r) => (tday[r.day] = r));
+      const TM = d.time || {};
       const tP = byDay[today] || 0, yP = byDay[yest] || 0;
       const delta = yP ? Math.round(((tP - yP) / yP) * 100) : null;
       const tF = fin[today] ? fin[today].n : 0;
@@ -208,6 +212,7 @@
           ${tile("New today", fmt(fresh[today] || 0), "first time playing")}
           ${tile(st.range ? `Players · ${st.range} days` : "Players · all time", fmt(T.players), `${fmt(T.votes + T.sliders)} answers given`)}
           ${tile("Came back", ret + "%", `${fmt(T.came_back)} played on 2+ days`)}
+          ${tile("Time on site", dur(TM.per_person), TM.visits ? `per player a day · ${dur(TM.per_visit)} per visit` : "no visits measured yet")}
         </div>
         <div class="grid">
           <section class="card">
@@ -237,16 +242,20 @@
             <div class="chart" id="cScores"></div>
           </section>
           <section class="card">
-            <div class="card-h"><h2>How to read this</h2></div>
-            <div class="muted" style="font-size:13px">
-              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Player</b> = one browser that answered at least one fight. Phone + laptop count as two.</p>
-              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Finished</b> = sent a final score after all 5 fights.</p>
-              <p style="margin:0">Guess and Higher-or-Lower aren't stored — see visits in Cloudflare Web Analytics.</p>
-            </div>
+            <div class="card-h"><h2>Time on site</h2><span class="muted" style="font-size:12.5px">average per player a day</span></div>
+            <div class="chart" id="cTime"></div>
           </section>
         </div>
         <section class="card">
-          <details><summary>All days as a table</summary>${dayTable(byDay, fin, fresh)}</details>
+          <details><summary>All days as a table</summary>${dayTable(byDay, fin, fresh, tday)}</details>
+          <details><summary>How to read this</summary>
+            <div class="muted" style="font-size:13px">
+              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Player</b> = one browser that answered at least one fight. Phone + laptop count as two.</p>
+              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Finished</b> = sent a final score after all 5 fights.</p>
+              <p style="margin:0 0 8px"><b style="color:var(--ink-2)">Time on site</b> = only while the tab is open on screen and someone touched it in the last 2 minutes. All of a player's visits that day are added up; "per visit" is one open tab.</p>
+              <p style="margin:0">Guess and Higher-or-Lower answers aren't stored, but their time is counted.</p>
+            </div>
+          </details>
         </section>
         <p class="stamp">Updated ${new Date(d.generated).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>`;
 
@@ -260,19 +269,20 @@
 
       daysChart(byDay, fin);
       hoursChart(d.hours || []);
+      timeChart(tday);
       fights();
       scoresChart(d.detail.scoreHist || []);
-      clearTimeout(st.rt); window.onresize = () => { clearTimeout(st.rt); st.rt = setTimeout(() => { daysChart(byDay, fin); hoursChart(d.hours || []); scoresChart(d.detail.scoreHist || []); }, 150); };
+      clearTimeout(st.rt); window.onresize = () => { clearTimeout(st.rt); st.rt = setTimeout(() => { daysChart(byDay, fin); hoursChart(d.hours || []); timeChart(tday); scoresChart(d.detail.scoreHist || []); }, 150); };
     }
 
     const tile = (k, v, s) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
     const dayScoreLine = (f) => (f ? `${fmt(f.n)} finished · avg ${fmt(f.avg)} · best ${fmt(f.best)}` : "nobody finished yet");
 
-    function dayTable(byDay, fin, fresh) {
-      const days = Object.keys(byDay).sort().reverse();
+    function dayTable(byDay, fin, fresh, tday) {
+      const days = [...new Set([...Object.keys(byDay), ...Object.keys(tday)])].sort().reverse();
       if (!days.length) return `<div class="empty">No players yet.</div>`;
-      return `<table><thead><tr><th>Day</th><th>Players</th><th>New</th><th>Finished</th><th>Avg score</th><th>Best</th></tr></thead><tbody>` +
-        days.map((k) => `<tr><td>${esc(longDate(k))}</td><td>${fmt(byDay[k])}</td><td>${fmt(fresh[k] || 0)}</td><td>${fmt(fin[k] ? fin[k].n : 0)}</td><td>${fin[k] ? fmt(fin[k].avg) : "—"}</td><td>${fin[k] ? fmt(fin[k].best) : "—"}</td></tr>`).join("") +
+      return `<table><thead><tr><th>Day</th><th>Players</th><th>New</th><th>Finished</th><th>Avg score</th><th>Best</th><th>Time / player</th></tr></thead><tbody>` +
+        days.map((k) => `<tr><td>${esc(longDate(k))}</td><td>${fmt(byDay[k])}</td><td>${fmt(fresh[k] || 0)}</td><td>${fmt(fin[k] ? fin[k].n : 0)}</td><td>${fin[k] ? fmt(fin[k].avg) : "—"}</td><td>${fin[k] ? fmt(fin[k].best) : "—"}</td><td>${tday[k] ? dur(tday[k].per_person) : "—"}</td></tr>`).join("") +
         `</tbody></table>`;
     }
 
@@ -291,7 +301,7 @@
       let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(opts.label || "")}">`;
       for (let i = 0; i <= 4; i++) {
         const v = (max / 4) * i, yy = y(v);
-        s += `<line class="grid-l" x1="${L}" x2="${w - R}" y1="${yy}" y2="${yy}"/><text class="axis" x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmt(Math.round(v * 10) / 10)}</text>`;
+        s += `<line class="grid-l" x1="${L}" x2="${w - R}" y1="${yy}" y2="${yy}"/><text class="axis" x="${L - 6}" y="${yy + 4}" text-anchor="end">${fmt(Math.round(v * 10) / 10)}${opts.unit || ""}</text>`;
       }
       list.forEach((x, i) => {
         const cx = L + cw * i + cw / 2;
@@ -337,6 +347,17 @@
       rows.forEach((r) => { n[(((r.h + Math.round(off)) % 24) + 24) % 24] += r.n; });
       const hh = (h) => (h % 12 || 12) + (h < 12 ? "a" : "p");
       bars(document.getElementById("cHours"), n.map((v, h) => ({ label: hh(h), tip: `<b>${hh(h)}–${hh((h + 1) % 24)}</b>${fmt(v)} players`, values: [{ v, fill: "var(--sky)" }] })), { h: 220, maxLabels: 6, label: "Players by hour" });
+    }
+
+    function timeChart(tday) {
+      const today = E.todayKey(), keys = Object.keys(tday).sort();
+      const first = st.range ? addDays(today, -(st.range - 1)) : (keys[0] || today);
+      const list = [];
+      for (let k = first < cfg.launchDate ? cfg.launchDate : first; k <= today; k = addDays(k, 1)) {
+        const r = tday[k], v = r ? r.per_person / 60000 : 0;
+        list.push({ label: shortDate(k), tip: `<b>${esc(longDate(k))}</b>${r ? `${dur(r.per_person)} per player<br>${dur(r.per_visit)} per visit · ${fmt(r.visits)} visits` : "no visits"}`, values: [{ v, fill: "var(--sky)" }] });
+      }
+      bars(document.getElementById("cTime"), list, { h: 180, maxLabels: 6, label: "Minutes per player per day", unit: "m", empty: "No visits measured yet." });
     }
 
     function scoresChart(rows) {
@@ -408,8 +429,10 @@
       });
       const scoreHist = [...Array(10).keys()].map((j) => ({ bucket: j, n: Math.round(dp * 0.6 * Math.exp(-Math.pow(j - 4.6, 2) / 5) / 3) }));
       const hours = [...Array(24).keys()].map((h) => ({ h, n: Math.round(30 + 90 * Math.max(0, Math.sin(((h - 10) / 24) * Math.PI * 2)) * (0.8 + rnd() * 0.4)) }));
+      const timeDaily = daily.map((r) => ({ day: r.day, visits: Math.round(r.players * 1.4), per_visit: Math.round(150000 + rnd() * 90000), per_person: Math.round(240000 + rnd() * 150000) }));
       return {
-        from, day, generated: Date.now(), daily, finished, newPlayers, hours,
+        from, day, generated: Date.now(), daily, finished, newPlayers, hours, timeDaily,
+        time: { visits: total * 1.4, per_visit: 196000, per_person: 312000 },
         totals: { players: Math.round(total * 0.55), came_back: Math.round(total * 0.21), votes: total * 4, sliders: total, finished: finished.reduce((s, r) => s + r.n, 0) },
         detail: { votes, sliders, sliderHist, scoreHist }
       };

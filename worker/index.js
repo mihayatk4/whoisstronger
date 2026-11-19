@@ -2,14 +2,16 @@
    Static files (index.html, js, css, pictures) are served by Cloudflare
    directly. This script only runs for paths that aren't files:
      POST /api/vote, /api/slider, /api/score  → votes database (D1, binding "DB")
+     POST /api/time                           → time spent on the site
      GET  /api/admin                          → numbers for admin.html (needs ADMIN_KEY)
      anything else                            → the 404 page               */
 import * as vote from "./api/vote.js";
 import * as slider from "./api/slider.js";
 import * as score from "./api/score.js";
 import * as admin from "./api/admin.js";
+import * as time from "./api/time.js";
 
-const ROUTES = { "/api/vote": vote, "/api/slider": slider, "/api/score": score };
+const ROUTES = { "/api/vote": vote, "/api/slider": slider, "/api/score": score, "/api/time": time };
 
 export default {
   async fetch(request, env) {

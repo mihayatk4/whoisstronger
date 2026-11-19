@@ -3,6 +3,7 @@
    secret set in Cloudflare (Worker → Settings → Variables and Secrets).
    "from" hides older days (test data), "day" picks the day shown in detail.
    A "player" is one browser (cid) that answered at least one fight.        */
+import { ensureVisits } from "./time.js";
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const json = (data, status) => new Response(JSON.stringify(data), {
   status: status || 200,
@@ -37,7 +38,8 @@ export async function onRequestGet({ request, env }) {
   const db = env.DB;
   const all = (sql, ...args) => db.prepare(sql).bind(...args).all().then((r) => r.results || []);
 
-  const [totals, daily, newPlayers, finished, hours, latest] = await Promise.all([
+  await ensureVisits(db);
+  const [totals, daily, newPlayers, finished, hours, latest, time, timeDaily] = await Promise.all([
     all(`SELECT
         (SELECT COUNT(DISTINCT cid) FROM ${PLAYS}) AS players,
         (SELECT COUNT(*) FROM (SELECT cid FROM ${PLAYS} GROUP BY cid HAVING COUNT(*) > 1)) AS came_back,
@@ -50,7 +52,14 @@ export async function onRequestGet({ request, env }) {
     // when people play: distinct browsers per hour (UTC) over the last 14 days
     all(`SELECT CAST((created / 3600000) % 24 AS INTEGER) AS h, COUNT(DISTINCT cid) AS n
          FROM votes WHERE day >= ?1 AND created > ?2 GROUP BY h`, from, Date.now() - 14 * 864e5),
-    all(`SELECT MAX(day) AS day FROM ${PLAYS}`, from)
+    all(`SELECT MAX(day) AS day FROM ${PLAYS}`, from),
+    // time on site: per visit (one open tab) and per person per day (all their visits added up)
+    all(`SELECT COUNT(*) AS visits, ROUND(AVG(ms)) AS per_visit,
+           (SELECT ROUND(AVG(t)) FROM (SELECT SUM(ms) AS t FROM visits WHERE day >= ?1 GROUP BY day, cid)) AS per_person
+         FROM visits WHERE day >= ?1`, from),
+    all(`SELECT day, COUNT(*) AS visits, ROUND(AVG(ms)) AS per_visit,
+           (SELECT ROUND(AVG(t)) FROM (SELECT SUM(ms) AS t FROM visits v2 WHERE v2.day = v.day GROUP BY cid)) AS per_person
+         FROM visits v WHERE day >= ?1 GROUP BY day`, from)
   ]);
 
   let day = url.searchParams.get("day");
@@ -65,7 +74,7 @@ export async function onRequestGet({ request, env }) {
 
   return json({
     from, day, generated: Date.now(),
-    totals: totals[0], daily, newPlayers, finished, hours,
+    totals: totals[0], daily, newPlayers, finished, hours, time: time[0], timeDaily,
     detail: { votes, sliders, sliderHist, scoreHist }
   });
 }

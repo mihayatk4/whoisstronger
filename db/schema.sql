@@ -23,3 +23,10 @@ CREATE TABLE IF NOT EXISTS scores (
   PRIMARY KEY (day, cid)
 );
 CREATE INDEX IF NOT EXISTS scores_day_total ON scores (day, total);
+
+-- time on site (the Worker also creates this table by itself on first use)
+CREATE TABLE IF NOT EXISTS visits (
+  sid TEXT PRIMARY KEY, cid TEXT NOT NULL, day TEXT NOT NULL,
+  ms INTEGER NOT NULL, created INTEGER NOT NULL, updated INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS visits_day ON visits (day);
