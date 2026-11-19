@@ -6,7 +6,7 @@ WIS.config = {
   locale: "en",
 
   // Public address of the site, used in the share text. Empty = current address.
-  siteUrl: "https://whoisstrongest.com",
+  siteUrl: "https://whoisstronger.org",
 
   // Day #1 of the game (local date, YYYY-MM-DD). The archive starts here and
   // the day number in the share text counts from it. Set it to the real

@@ -1,4 +1,4 @@
-// Cloudflare Worker settings for whoisstrongest.com (deployed by "npx wrangler deploy").
+// Cloudflare Worker settings for whoisstronger.org (deployed by "npx wrangler deploy").
 {
   "name": "whoisstronger",
   "main": "worker/index.js",

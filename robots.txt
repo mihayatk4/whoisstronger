@@ -4,4 +4,4 @@ Disallow: /api/
 Disallow: /tools/
 Disallow: /data/
 
-Sitemap: https://whoisstrongest.com/sitemap.xml
+Sitemap: https://whoisstronger.org/sitemap.xml

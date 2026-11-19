@@ -155,15 +155,15 @@ node tools/fetch-superheroes.js
 - **Счёт дня не ниже 0.** Угадайка считается отдельно (до 100), в счёт дня и ранг не входит.
 - **Ранг** — сумма очков боёв за все дни (Mortal → Absolute). **Серия дней** растёт, если все бои дня сыграны в этот день. Один пропуск в неделю прощается (`streakFreeze`).
 
-## Запуск на whoisstrongest.com
+## Запуск на whoisstronger.org
 
-Название остаётся **Who's Stronger?**, домен — `whoisstrongest.com` (`siteUrl` в `js/config.js`, ссылки в `index.html`, `privacy.html`, `robots.txt`, `sitemap.xml`).
+Название остаётся **Who's Stronger?**, домен — `whoisstronger.org` (`siteUrl` в `js/config.js`, ссылки в `index.html`, `privacy.html`, `robots.txt`, `sitemap.xml`).
 
 ### Перед запуском
 
 1. **Дата запуска.** В `js/config.js` поставьте `launchDate` = день запуска (сейчас `2026-11-17`). С этого дня считается «Day #1» и начинается архив. Меняйте до запуска: после — прошлые дни перемешаются.
 2. **Бои.** Расписание вручную идёт до 2026-12-07 включительно. Дальше нужна новая партия в `data/matchups.csv`.
-3. **Почта для связи.** На `privacy.html` указан `contact@whoisstrongest.com`. Включите в Cloudflare **Email Routing** (бесплатно): домен → Email → Email Routing → пересылка `contact@` на вашу почту.
+3. **Почта для связи.** На `privacy.html` указан `contact@whoisstronger.org`. Включите в Cloudflare **Email Routing** (бесплатно): домен → Email → Email Routing → пересылка `contact@` на вашу почту.
 
 ### Публикация (Cloudflare Workers)
 
@@ -172,15 +172,15 @@ node tools/fetch-superheroes.js
 1. **Первый запуск** проходит без базы: игра работает, вместо процентов игроков — «Not enough votes yet».
 2. **База голосов (D1).** Cloudflare → Storage & Databases → D1 → Create → имя `whoisstrongest`. Откройте её → **Console** → вставьте всё из `db/schema.sql` → Execute. Скопируйте **Database ID** (вверху страницы базы).
 3. **Подключите базу.** В `wrangler.jsonc` уберите `//` перед блоком `d1_databases` (7 строк) и вставьте свой ID вместо `PASTE-YOUR-DATABASE-ID-HERE`. Загрузите на GitHub — Cloudflare сам пересоберёт. (Привязку через сайт Cloudflare не делайте: при следующей сборке её перезапишет `wrangler.jsonc`.)
-4. **Домен.** Worker whoisstronger → Settings → **Domains & Routes** → Add → Custom domain → `whoisstrongest.com`, затем ещё раз для `www.whoisstrongest.com`. Домен должен быть в вашем аккаунте Cloudflare (куплен там или DNS перенесён через Add a site).
-5. **Аналитика (без cookies).** Cloudflare → Analytics & Logs → **Web Analytics** → Add a site → `whoisstrongest.com` → автоматическая установка. Либо скопируйте токен в `analyticsToken` в `js/config.js`.
+4. **Домен.** Worker whoisstronger → Settings → **Domains & Routes** → Add → Custom domain → `whoisstronger.org`, затем ещё раз для `www.whoisstronger.org`. Домен должен быть в вашем аккаунте Cloudflare (куплен там или DNS перенесён через Add a site).
+5. **Аналитика (без cookies).** Cloudflare → Analytics & Logs → **Web Analytics** → Add a site → `whoisstronger.org` → автоматическая установка. Либо скопируйте токен в `analyticsToken` в `js/config.js`.
 
 ### Проверка после запуска
 
 - Откройте сайт с телефона, сыграйте день. Сначала вместо процентов игроков будет «Not enough votes yet» — они появятся после 30 голосов за бой (`minVotesToShow`), «лучше X%» — после 20 игроков за день.
-- Проверка сервера: `https://whoisstrongest.com/api/vote` в браузере должен ответить `{"error":"POST only"}`. Если в игре всё ещё «Not enough votes yet» после многих голосов — проверьте шаг 3 (база подключена).
+- Проверка сервера: `https://whoisstronger.org/api/vote` в браузере должен ответить `{"error":"POST only"}`. Если в игре всё ещё «Not enough votes yet» после многих голосов — проверьте шаг 3 (база подключена).
 - Превью ссылки: вставьте адрес в Telegram/Discord — должна появиться картинка Goku vs Superman. Если кеш старый — проверьте на opengraph.xyz.
-- Search Console (Google): добавьте сайт и отправьте `https://whoisstrongest.com/sitemap.xml`.
+- Search Console (Google): добавьте сайт и отправьте `https://whoisstronger.org/sitemap.xml`.
 
 ### Обновления
 

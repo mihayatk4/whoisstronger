@@ -1,4 +1,4 @@
-/* The Cloudflare Worker behind whoisstrongest.com.
+/* The Cloudflare Worker behind whoisstronger.org.
    Static files (index.html, js, css, pictures) are served by Cloudflare
    directly. This script only runs for paths that aren't files:
      POST /api/vote, /api/slider, /api/score  → votes database (D1, binding "DB")

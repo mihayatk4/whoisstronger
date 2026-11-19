@@ -68,7 +68,7 @@ async function og() {
   <rect x="${W - 110 - PW - 6}" y="${TOP - 6}" width="${PW + 12}" height="${PH + 12}" rx="40" fill="none" stroke="${SKY}" stroke-width="6"/>
   <text x="${W / 2}" y="330" text-anchor="middle" font-family="${font}" font-size="30" font-weight="800" fill="#c9ced8">5 fights</text>
   <text x="${W / 2}" y="368" text-anchor="middle" font-family="${font}" font-size="30" font-weight="800" fill="#c9ced8">every day</text>
-  <text x="${W / 2}" y="606" text-anchor="middle" font-family="${font}" font-size="28" font-weight="800" fill="#8a91a0">whoisstrongest.com</text>
+  <text x="${W / 2}" y="606" text-anchor="middle" font-family="${font}" font-size="28" font-weight="800" fill="#8a91a0">whoisstronger.org</text>
 </svg>`);
   const vs = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150">
   <clipPath id="c"><circle cx="75" cy="75" r="70"/></clipPath>
