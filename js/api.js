@@ -5,7 +5,7 @@
    tuned. On a live site it calls the real API below and, until that API
    exists, simply shows "Not enough votes yet".
 
-   API (Cloudflare Pages Functions + D1, see functions/api and db/schema.sql):
+   API (Cloudflare Worker + D1, see worker/ and db/schema.sql):
      POST /api/vote    { day, a, b, pick, cid }   -> { total, votesA }
      POST /api/slider  { day, a, b, value, cid }  -> { avg, total }
      POST /api/score   { day, total, cid }        -> { percentile, players }

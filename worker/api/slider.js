@@ -1,6 +1,6 @@
 /* POST /api/slider  { day, a, b, value, cid }  ->  { avg, total }
    value = the player's % for the LEFT fighter (body.a), 1-99.
-   avg comes back for the same left fighter. Needs the D1 binding "DB". */
+   avg comes back for the same left fighter. Needs the D1 binding "DB". Called from worker/index.js. */
 const ID = /^[a-z0-9]{1,40}$/, DAY = /^\d{4}-\d{2}-\d{2}$/, CID = /^[a-z0-9]{8,40}$/;
 const json = (data, status) => new Response(JSON.stringify(data), {
   status: status || 200, headers: { "content-type": "application/json", "cache-control": "no-store" }

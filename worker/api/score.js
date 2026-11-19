@@ -1,6 +1,6 @@
 /* POST /api/score  { day, total, cid }  ->  { percentile, players }
    percentile = share of that day's players you beat (ties count half).
-   null until 20 players have finished the day. Needs the D1 binding "DB". */
+   null until 20 players have finished the day. Needs the D1 binding "DB". Called from worker/index.js. */
 const DAY = /^\d{4}-\d{2}-\d{2}$/, CID = /^[a-z0-9]{8,40}$/;
 const MIN_PLAYERS = 20;
 const json = (data, status) => new Response(JSON.stringify(data), {

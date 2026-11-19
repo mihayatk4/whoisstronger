@@ -1,6 +1,6 @@
 /* POST /api/vote  { day, a, b, pick, cid }  ->  { total, votesA }
    One vote per browser per fight (the first one counts). votesA = votes for
-   the fighter the player saw on the LEFT (body.a). Needs the D1 binding "DB". */
+   the fighter the player saw on the LEFT (body.a). Needs the D1 binding "DB". Called from worker/index.js. */
 const ID = /^[a-z0-9]{1,40}$/, DAY = /^\d{4}-\d{2}-\d{2}$/, CID = /^[a-z0-9]{8,40}$/;
 const json = (data, status) => new Response(JSON.stringify(data), {
   status: status || 200, headers: { "content-type": "application/json", "cache-control": "no-store" }

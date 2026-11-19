@@ -29,11 +29,12 @@ python -m http.server 5173
 | `js/engine.js` | Правила: формула шанса, очки, подбор пар на день, загаданный персонаж |
 | `js/store.js` | Прогресс игрока в браузере: серия, статистика |
 | `js/api.js` | Голоса игроков и «лучше X% игроков». На своём компьютере — демо-данные, на сайте — сервер `/api/...` |
-| `functions/api/*.js` | Сервер голосов (Cloudflare Pages Functions): `vote`, `slider`, `score` |
+| `worker/index.js`, `worker/api/*.js` | Сервер голосов (Cloudflare Worker): `vote`, `slider`, `score` |
+| `wrangler.jsonc`, `.assetsignore` | Настройки Cloudflare: имя, база голосов, какие файлы НЕ публиковать |
 | `db/schema.sql` | Таблицы базы голосов (Cloudflare D1). Вставляется один раз в консоль D1 |
 | `privacy.html`, `404.html` | Страница конфиденциальности/контактов и страница «не найдено» |
 | `robots.txt`, `sitemap.xml`, `site.webmanifest` | Для поисковиков и для «добавить на главный экран» |
-| `_headers`, `_redirects` | Настройки Cloudflare: кеш (обновления доходят сразу), служебные папки скрыты с сайта |
+| `_headers` | Кеш: скрипты и стили всегда свежие, картинки кешируются на неделю |
 | `assets/og.jpg`, `assets/icons/` | Картинка-превью для ссылки и иконки. Пересоздать: `tools/make-images.js` |
 | `assets/originals/` | Исходники картинок до сжатия (на сайте не показываются) |
 | `tools/optimize-images.js` | Сжимает новые картинки персонажей (запускать после добавления фото) |
@@ -164,21 +165,20 @@ node tools/fetch-superheroes.js
 2. **Бои.** Расписание вручную идёт до 2026-12-07 включительно. Дальше нужна новая партия в `data/matchups.csv`.
 3. **Почта для связи.** На `privacy.html` указан `contact@whoisstrongest.com`. Включите в Cloudflare **Email Routing** (бесплатно): домен → Email → Email Routing → пересылка `contact@` на вашу почту.
 
-### Публикация (один раз, ~20 минут)
+### Публикация (Cloudflare Workers)
 
-1. **Код на GitHub.** Создайте приватный репозиторий и загрузите туда папку проекта (GitHub Desktop: File → Add local repository → Publish). Папки `node_modules` не нужны (`.gitignore`).
-2. **Cloudflare Pages.** Dashboard → Workers & Pages → Create → Pages → Connect to Git → выберите репозиторий.
-   - Framework preset: **None**. Build command: **пусто**. Build output directory: **`/`** (корень).
-   - Deploy. Сайт появится на `*.pages.dev` — откройте и проверьте.
-3. **База голосов (D1).** Dashboard → Storage & Databases → D1 → Create database → имя `whoisstrongest`. Откройте её → Console → вставьте всё из `db/schema.sql` → Execute.
-4. **Подключите базу к сайту.** Проект Pages → Settings → Bindings → Add → D1 database: Variable name **`DB`**, база `whoisstrongest`. Сделайте для Production (и Preview, если нужно). Затем Deployments → Retry deployment.
-5. **Домен.** Проект Pages → Custom domains → Set up → `whoisstrongest.com` (и `www.whoisstrongest.com`). Если домен куплен в Cloudflare — всё настроится само; если у другого регистратора — сначала перенесите DNS в Cloudflare (Add a site) и смените NS-серверы у регистратора.
-6. **Аналитика (без cookies).** Проект Pages → Metrics → Web Analytics → Enable. Ничего в коде менять не нужно. (Либо вставьте токен в `analyticsToken` в `js/config.js`.)
+Проект уже подключён: Cloudflare → Workers & Pages → **whoisstronger** берёт код из GitHub и при каждой загрузке запускает `npx wrangler deploy`. Настройки — в `wrangler.jsonc`; что НЕ попадает на сайт — в `.assetsignore` (таблицы, скрипты, README, исходники картинок).
+
+1. **Первый запуск** проходит без базы: игра работает, вместо процентов игроков — «Not enough votes yet».
+2. **База голосов (D1).** Cloudflare → Storage & Databases → D1 → Create → имя `whoisstrongest`. Откройте её → **Console** → вставьте всё из `db/schema.sql` → Execute. Скопируйте **Database ID** (вверху страницы базы).
+3. **Подключите базу.** В `wrangler.jsonc` уберите `//` перед блоком `d1_databases` (7 строк) и вставьте свой ID вместо `PASTE-YOUR-DATABASE-ID-HERE`. Загрузите на GitHub — Cloudflare сам пересоберёт. (Привязку через сайт Cloudflare не делайте: при следующей сборке её перезапишет `wrangler.jsonc`.)
+4. **Домен.** Worker whoisstronger → Settings → **Domains & Routes** → Add → Custom domain → `whoisstrongest.com`, затем ещё раз для `www.whoisstrongest.com`. Домен должен быть в вашем аккаунте Cloudflare (куплен там или DNS перенесён через Add a site).
+5. **Аналитика (без cookies).** Cloudflare → Analytics & Logs → **Web Analytics** → Add a site → `whoisstrongest.com` → автоматическая установка. Либо скопируйте токен в `analyticsToken` в `js/config.js`.
 
 ### Проверка после запуска
 
 - Откройте сайт с телефона, сыграйте день. Сначала вместо процентов игроков будет «Not enough votes yet» — они появятся после 30 голосов за бой (`minVotesToShow`), «лучше X%» — после 20 игроков за день.
-- Проверка сервера: `https://whoisstrongest.com/api/vote` в браузере должен ответить `{"error":"POST only"}`.
+- Проверка сервера: `https://whoisstrongest.com/api/vote` в браузере должен ответить `{"error":"POST only"}`. Если в игре всё ещё «Not enough votes yet» после многих голосов — проверьте шаг 3 (база подключена).
 - Превью ссылки: вставьте адрес в Telegram/Discord — должна появиться картинка Goku vs Superman. Если кеш старый — проверьте на opengraph.xyz.
 - Search Console (Google): добавьте сайт и отправьте `https://whoisstrongest.com/sitemap.xml`.
 

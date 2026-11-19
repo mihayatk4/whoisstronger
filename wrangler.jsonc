@@ -1,0 +1,25 @@
+// Cloudflare Worker settings for whoisstrongest.com (deployed by "npx wrangler deploy").
+{
+  "name": "whoisstronger",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+
+  // The whole project folder is the website; .assetsignore lists what is NOT uploaded.
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page"
+  },
+
+  // Votes database. Create it once (see README → "База голосов"), then remove the
+  // "//" in front of the 7 lines below and paste your database_id.
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "whoisstrongest",
+  //     "database_id": "PASTE-YOUR-DATABASE-ID-HERE"
+  //   }
+  // ],
+
+  "observability": { "enabled": true }
+}
